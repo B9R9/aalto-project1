@@ -3,7 +3,6 @@ services:
     name: shopping-list-app
     runtime: docker
     dockerfilePath: ./shopping-list/Dockerfile
-    startCommand: npm run start
     envVars:
       - key: MODE
         value: production
@@ -13,33 +12,29 @@ services:
         value: http://localhost:7777
       - key: DATABASE_URL
         fromDatabase:
-          name: shopping-list-db
+          name: shopping-list-db  # Référence à la base de données existante
           property: connectionString
     autoDeploy: true
     plan: starter
     healthCheckPath: /
 
-  - type: cron  # Job pour exécuter les migrations Flyway
+  - type: cron  # Cron job pour exécuter les migrations Flyway
     name: flyway-migration
     runtime: docker
     dockerfilePath: ./flyway/Dockerfile
-    schedule: "@onstart"  # Exécute les migrations à chaque démarrage
-    startCommand: >
-      flyway -url=jdbc:postgresql://${DATABASE_URL} -user=${FLYWAY_USER} -password=${FLYWAY_PASSWORD} migrate
+    schedule: "@daily"  # Exécute les migrations quotidiennement (ou choisis une autre fréquence)
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: shopping-list-db
+          name: shopping-list-db  # Référence à la base de données existante
           property: connectionString
-      - key: FLYWAY_USER
-        value: ${PG_PROD_USER}  # Tu pourras définir cela dans Render
-      - key: FLYWAY_PASSWORD
-        value: ${PG_PROD_PASSWORD}  # Tu pourras définir cela dans Render
+      - key: PG_PROD_USER
+        value: PG_PROD_USER # Tu pourras définir cela dans Render
+      - key: PG_PROD_PASSWORD
+        value: PG_PROD_PASSWORD  # Tu pourras définir cela dans Render
     plan: starter
 
 databases:
   - name: shopping-list-db
-    databaseName: ${PG_PROD_DB}
-    user: ${PG_PROD_USER}
     plan: starter
     region: oregon
