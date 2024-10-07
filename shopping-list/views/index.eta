@@ -1,0 +1,9 @@
+<% layout("./layouts/layout.eta") %>
+<a href="/lists">Lists</a>
+
+<% if (it.listsCount && it.listsCount === "0") { %>
+  <p>No shopping lists yet.</p>
+<% } else { %>
+<p id="shoppingList-count">Shopping lists: <%= it.listsCount %></p>
+<p>Shopping list items: <%= it.itemsCount %></p>
+<% } %>

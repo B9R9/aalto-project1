@@ -1,0 +1,22 @@
+<% layout("./layouts/layout.eta") %>
+<form action="/lists" method="post">
+	<input type="text" name="name" placeholder="List name" required>
+	</br>
+	<input type="submit" name="submit" />
+</form>
+
+<ul>
+	<% if (it.lists && it.lists.length > 0) { %>
+		<% it.lists.forEach((list) => { %>
+			<li><a href="/lists/<%= list.id %>"><%= list.name %></a></li>
+			<form action="/lists/<%= list.id %>/deactivate" method="post">
+                    <input type="submit" value="Deactivate list!" />
+            </form>
+			</br>
+		<% }); %>
+	<% } else { %>
+		<li>No lists yet!</li>
+	<% }; %>
+</ul>
+
+<a href="/">Menu</a>
