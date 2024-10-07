@@ -1,0 +1,7 @@
+.env
+*.zip
+
+/app-cache
+
+/e2e-playwright/node_modules
+/e2e-playwright/test-results
