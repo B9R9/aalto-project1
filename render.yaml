@@ -1,10 +1,9 @@
 services:
   - type: web
     name: shopping-list-app
-    env: docker
+    runtime: docker
     dockerfilePath: ./shopping-list/Dockerfile
-    buildCommand: ""
-    startCommand: ./start-app.sh
+    startCommand: npm run start
     envVars:
       - key: MODE
         value: production
@@ -12,47 +11,35 @@ services:
         value: 7777
       - key: BASE_URL
         value: http://localhost:7777
-      - fromDatabase:
+      - key: DATABASE_URL
+        fromDatabase:
           name: shopping-list-db
-          key: DATABASE_URL
+          property: connectionString
     autoDeploy: true
     plan: starter
     healthCheckPath: /
 
-  - type: cronjob
-    name: flyway-migrate
-    env: docker
-    schedule: "@every 24h"
-    dockerCommand: "flyway -url=jdbc:postgresql://$(DATABASE_URL) -user=$(FLYWAY_USER) -password=$(FLYWAY_PASSWORD) migrate"
+  - type: cron  # Job pour exécuter les migrations Flyway
+    name: flyway-migration
+    runtime: docker
+    dockerfilePath: ./flyway/Dockerfile
+    schedule: "@onstart"  # Exécute les migrations à chaque démarrage
+    startCommand: >
+      flyway -url=jdbc:postgresql://${DATABASE_URL} -user=${FLYWAY_USER} -password=${FLYWAY_PASSWORD} migrate
     envVars:
-      - fromDatabase:
+      - key: DATABASE_URL
+        fromDatabase:
           name: shopping-list-db
-          key: DATABASE_URL
+          property: connectionString
       - key: FLYWAY_USER
-        value: ${FLYWAY_USER}
+        value: ${PG_PROD_USER}  # Tu pourras définir cela dans Render
       - key: FLYWAY_PASSWORD
-        value: ${FLYWAY_PASSWORD}
-    autoDeploy: true
-
-  - type: cronjob
-    name: flyway-repair
-    env: docker
-    schedule: "@every 7d"
-    dockerCommand: "flyway -url=jdbc:postgresql://$(DATABASE_URL) -user=$(FLYWAY_USER) -password=$(FLYWAY_PASSWORD) repair"
-    envVars:
-      - fromDatabase:
-          name: shopping-list-db
-          key: DATABASE_URL
-      - key: FLYWAY_USER
-        value: ${FLYWAY_USER}
-      - key: FLYWAY_PASSWORD
-        value: ${FLYWAY_PASSWORD}
-    autoDeploy: true
+        value: ${PG_PROD_PASSWORD}  # Tu pourras définir cela dans Render
+    plan: starter
 
 databases:
   - name: shopping-list-db
     databaseName: ${PG_PROD_DB}
     user: ${PG_PROD_USER}
-    password: ${PG_PROD_PASSWORD}
     plan: starter
     region: oregon
