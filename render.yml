@@ -1,0 +1,58 @@
+services:
+  - type: web
+    name: shopping-list-app
+    env: docker
+    dockerfilePath: ./shopping-list/Dockerfile
+    buildCommand: ""
+    startCommand: ./start-app.sh
+    envVars:
+      - key: MODE
+        value: production
+      - key: PORT
+        value: 7777
+      - key: BASE_URL
+        value: http://localhost:7777
+      - fromDatabase:
+          name: shopping-list-db
+          key: DATABASE_URL
+    autoDeploy: true
+    plan: starter
+    healthCheckPath: /
+
+  - type: cronjob
+    name: flyway-migrate
+    env: docker
+    schedule: "@every 24h"
+    dockerCommand: "flyway -url=jdbc:postgresql://$(DATABASE_URL) -user=$(FLYWAY_USER) -password=$(FLYWAY_PASSWORD) migrate"
+    envVars:
+      - fromDatabase:
+          name: shopping-list-db
+          key: DATABASE_URL
+      - key: FLYWAY_USER
+        value: ${FLYWAY_USER}
+      - key: FLYWAY_PASSWORD
+        value: ${FLYWAY_PASSWORD}
+    autoDeploy: true
+
+  - type: cronjob
+    name: flyway-repair
+    env: docker
+    schedule: "@every 7d"
+    dockerCommand: "flyway -url=jdbc:postgresql://$(DATABASE_URL) -user=$(FLYWAY_USER) -password=$(FLYWAY_PASSWORD) repair"
+    envVars:
+      - fromDatabase:
+          name: shopping-list-db
+          key: DATABASE_URL
+      - key: FLYWAY_USER
+        value: ${FLYWAY_USER}
+      - key: FLYWAY_PASSWORD
+        value: ${FLYWAY_PASSWORD}
+    autoDeploy: true
+
+databases:
+  - name: shopping-list-db
+    databaseName: ${PG_PROD_DB}
+    user: ${PG_PROD_USER}
+    password: ${PG_PROD_PASSWORD}
+    plan: starter
+    region: oregon
